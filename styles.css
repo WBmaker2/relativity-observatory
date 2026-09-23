@@ -55,6 +55,14 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 24px var(--inset) 6
 .page-lead { border-left: 4px solid var(--accent); padding-left: 14px; margin: 0 0 24px; }
 .page-lead p { margin: 6px 0; }
 .muted { color: var(--muted); }
+/* 도입 삽화: 계산 화면과 분리된 맥락 제공용. 수치는 표·도표가 담당. */
+.intro-strip {
+  display: grid; gap: 12px; margin: 16px 0 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.intro-strip picture { border: 1px solid var(--line); background: #fff; }
+.intro-strip img { display: block; width: 100%; height: auto; }
+.intro-strip figcaption { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
 
 /* Grid structure — min-width:0 keeps tables/fieldsets from forcing page overflow */
 .layout {

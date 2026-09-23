@@ -4,7 +4,7 @@
 
 ## 코드
 
-- [x] 엔진 테스트 13개 통과 (`node --test tests/engine.test.js tests/validation.test.js`)
+- [x] 엔진 테스트 20개 통과 (`node --test tests/engine.test.js tests/validation.test.js tests/p1.test.js`)
 - [x] 경계·무효 입력 테스트 통과 (β ±0.9, 사건 ±5, NaN·Infinity·빈 값, 수신 null, 손상 기록)
 - [x] 모든 자원 경로가 상대 경로(`./`)라 하위 경로에서도 동작
 - [x] 하위 경로 제공(예: `/relativity-observatory/`)에서 CSS·JS·UPDATELOG 로드 확인 (로컬 8158번 전부 200, 비교·대화상자 동작 확인)

@@ -14,7 +14,7 @@
 - `index.html` — 의미 구조와 5개 화면(설정·장면·좌표·도표·비교·기록)
 - `styles.css` — 스위스 토큰과 배치 수치 (화면 코드는 변수와 클래스만 사용)
 - `app.js` — 상태 기계와 렌더링 (엔진과 화면 연결)
-- `engine/` — 렌더러와 분리된 순수 함수 (`lorentz.js`, `intervals.js`, `receptions.js`, `scenarios.js`)
+- `engine/` — 렌더러와 분리된 순수 함수 (`lorentz.js`, `intervals.js`, `receptions.js`, `scenarios.js`, P1: `length.js`, `propertime.js`, `segments.js`)
 - `tests/` — 엔진 불변량 테스트 (`node --test`)
 - `docs/` — 업데이트 내역, 검증 기록, 배포 점검표
 
@@ -23,4 +23,5 @@
 - 단위: 광초·초, c=1. S′는 S에 대해 +x 방향 속도 v, 원점은 t=t′=0에 일치.
 - β∈[-0.9,0.9], 사건 x∈[-5,5], t∈[-5,5]. 범위 밖 입력은 이전 유효값을 유지하고 이유를 표시한다.
 - P0: 등속 1D, 사건 2~4개, 기준계 2개. 일반상대론·가속·사실적 광학 렌더링 제외.
+- P1: 길이 동시 측정, 고유시간, 2구간 왕복 여정. 쌍둥이 해석 결론은 별도 설계 전까지 유보. 설계는 `12-relativity-p1.md`.
 - 자세한 설계는 `12-relativity-observatory.md`, 공통 원칙은 `00-shared-design-principles.md`를 본다.

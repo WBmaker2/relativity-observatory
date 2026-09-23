@@ -29,6 +29,12 @@
       <p><strong>두 사건이 동시에 일어났다는 말은 모든 관찰자에게 같을까?</strong></p>
       <p class="muted">플랫폼 양끝의 섬광을 이동 관찰자가 어떤 순서로 받는지 예측하고, 사건 시간과 빛 도착 시간을 분리해 확인합니다. 대상: 고등학교 물리·수학, 30분 활동.</p>
       <p><button class="btn btn-primary" id="start-btn" type="button">시작하기</button></p>
+      <figure class="intro-strip" aria-label="교육용 가상 도입 삽화">
+        <picture><source srcset="./assets/intro-train.webp" type="image/webp" /><img src="./assets/intro-train.png" alt="교육용 가상 열차 도입 삽화 (수치 없음)" loading="lazy" /></picture>
+        <picture><source srcset="./assets/intro-platform.webp" type="image/webp" /><img src="./assets/intro-platform.png" alt="교육용 가상 플랫폼 도입 삽화 (수치 없음)" loading="lazy" /></picture>
+        <picture><source srcset="./assets/intro-observatory.webp" type="image/webp" /><img src="./assets/intro-observatory.png" alt="교육용 가상 관측소 도입 삽화 (수치 없음)" loading="lazy" /></picture>
+        <figcaption>교육용 가상 삽화 (수치·수식 없음). 측정은 아래 표와 도표로 확인한다.</figcaption>
+      </figure>
     </div>
 
     <ol class="stepper" aria-label="학습 단계" id="stepper">
@@ -178,6 +184,36 @@
           <hr class="rule" />
           <h3>전이 과제</h3>
           <p>빛으로 연결된 두 사건(빛꼴)의 순서는 β를 바꿔도 바뀌지 않는지 검사해 보세요.</p>
+        </section>
+
+        <section class="card" aria-labelledby="h-p1">
+          <h2 id="h-p1">길이·고유시간·여정 (P1)</h2>
+          <p class="muted">위에서 정한 β 값을 함께 쓴다. 길이 측정은 같은 시각에 잰 두 끝만 인정한다.</p>
+          <div class="field">
+            <label for="p1-l0">막대 정지 길이 L₀ (광초, 0 초과 ~ 10)</label>
+            <input id="p1-l0" type="number" step="0.1" min="0.1" max="10" value="2" aria-describedby="p1-l0-error" />
+            <span class="error-text" id="p1-l0-error" role="alert" hidden></span>
+          </div>
+          <p class="status-line">결과: <output id="p1-l-out" for="p1-l0">β=0.60에서 L₀=2 → L′=1.60광초</output></p>
+          <hr class="rule" />
+          <h3>고유시간</h3>
+          <div class="field">
+            <label for="p1-dt">S계 경과 Δt (초, 0 이상)</label>
+            <input id="p1-dt" type="number" step="0.05" min="0" value="1.25" />
+          </div>
+          <p class="status-line">결과: <output id="p1-tau-out" for="p1-dt">이동 시계 Δτ=1.00초</output></p>
+          <hr class="rule" />
+          <h3>왕복 여정 (2구간, 순간 전환 이상화)</h3>
+          <div class="grid-2">
+            <div class="field"><label for="p1-s1b">구간1 β (−0.9 ~ 0.9)</label><input id="p1-s1b" type="number" step="0.05" min="-0.9" max="0.9" value="0.6" /></div>
+            <div class="field"><label for="p1-s1t">구간1 Δt (초, 0 이상)</label><input id="p1-s1t" type="number" step="0.05" min="0" value="1.25" /></div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label for="p1-s2b">구간2 β (−0.9 ~ 0.9)</label><input id="p1-s2b" type="number" step="0.05" min="-0.9" max="0.9" value="-0.6" /></div>
+            <div class="field"><label for="p1-s2t">구간2 Δt (초, 0 이상)</label><input id="p1-s2t" type="number" step="0.05" min="0" value="1.25" /></div>
+          </div>
+          <p class="status-line">결과: <output id="p1-j-out">좌표시 합 2.50초 · 고유시간 합 2.00초</output></p>
+          <p class="muted">누가 젊어지는가의 해석은 별도 설계 전까지 다루지 않는다.</p>
         </section>
 
         <section class="card" aria-labelledby="h-record">

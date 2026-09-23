@@ -1,6 +1,9 @@
 import { forward, gamma, BETA_MIN, BETA_MAX } from "./engine/lorentz.js";
 import { intervalSquared, classify, KIND_LABEL, describePair } from "./engine/intervals.js";
 import { receptionTime } from "./engine/receptions.js";
+import { measureSimultaneousLength, validateL0 } from "./engine/length.js";
+import { properTime } from "./engine/propertime.js";
+import { journeySummary } from "./engine/segments.js";
 import { defaultScenario, validateBeta, validateEvent, ENGINE_VERSION, SCENARIO_ID } from "./engine/scenarios.js";
 
 // WCAG: semantic structure lives in index.html; here we keep DOM updates + engine wiring.
@@ -41,6 +44,10 @@ const els = {
   saveStatus: $("save-status"), recordList: $("record-list"),
   stepper: $("stepper"), start: $("start-btn"),
   logDialog: $("log-dialog"), logBody: $("log-body"),
+  p1L0: $("p1-l0"), p1L0Error: $("p1-l0-error"), p1LOut: $("p1-l-out"),
+  p1Dt: $("p1-dt"), p1TauOut: $("p1-tau-out"),
+  p1S1b: $("p1-s1b"), p1S1t: $("p1-s1t"), p1S2b: $("p1-s2b"), p1S2t: $("p1-s2t"),
+  p1JOut: $("p1-j-out"),
 };
 
 function setPhase(p) {
@@ -267,9 +274,41 @@ function renderScene() {
 }
 
 function renderAll() {
-  renderTables(); renderPlot(); renderScene();
+  renderTables(); renderPlot(); renderScene(); renderP1();
   els.cursorReadout.textContent = `t = ${fmt(state.cursorT)}초 · 키보드 ←/→ 로 0.05초씩 이동`;
   els.cursorFrame.textContent = `현재 시간 커서는 ${state.frame}계 시각`;
+}
+
+// P1: 위에서 정한 β를 함께 쓴다. 입력이 비면 NaN으로 돌려 검증에서 막는다.
+function renderP1() {
+  const num = (el) => (el.value.trim() === "" ? NaN : Number(el.value));
+  const L0 = num(els.p1L0);
+  const vL = validateL0(L0);
+  if (!vL.ok) {
+    els.p1L0Error.textContent = vL.reason;
+    els.p1L0Error.hidden = false;
+    els.p1LOut.textContent = "길이를 잴 수 없음 (입력 확인)";
+  } else {
+    els.p1L0Error.hidden = true;
+    try {
+      const { L } = measureSimultaneousLength(L0, state.beta);
+      els.p1LOut.textContent = `β=${fmt(state.beta)}에서 L₀=${fmt(L0)} → L′=${fmt(L)}광초 (S′ 동시 측정)`;
+    } catch (e) { els.p1LOut.textContent = e.message; }
+  }
+  const dt = num(els.p1Dt);
+  try {
+    els.p1TauOut.textContent = `이동 시계 Δτ=${fmt(properTime(dt, state.beta))}초`;
+  } catch { els.p1TauOut.textContent = "고유시간을 잴 수 없음 (0 이상 숫자 입력)"; }
+  try {
+    const { coordSum, properSum, junctions } = journeySummary([
+      { beta: num(els.p1S1b), dt: num(els.p1S1t) },
+      { beta: num(els.p1S2b), dt: num(els.p1S2t) },
+    ]);
+    els.p1JOut.textContent = `좌표시 합 ${fmt(coordSum)}초 · 고유시간 합 ${fmt(properSum)}초 · 전환점 x=${fmt(junctions[1].x)}광초`;
+  } catch (e) { els.p1JOut.textContent = e.message || "여정을 잴 수 없음 (입력 확인)"; }
+}
+for (const el of [els.p1L0, els.p1Dt, els.p1S1b, els.p1S1t, els.p1S2b, els.p1S2t]) {
+  el.addEventListener("input", renderP1);
 }
 
 function loadRecords() {
