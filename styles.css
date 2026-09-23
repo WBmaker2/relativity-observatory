@@ -1,0 +1,152 @@
+/* Swiss tokens + systematic metrics for relativity-observatory (P0).
+   Anchor: Swiss — white surface, single accent, hairline grid, sans + tabular numerals.
+   All design math lives here; view code uses variables and named classes. */
+:root {
+  --surface: #ffffff;
+  --surface-alt: #f7f7f8;
+  --ink: #111111;
+  --muted: #555555;
+  --line: #e2e2e4;
+  --line-strong: #111111;
+  --accent: #002fa7;
+  --accent-pressed: #001f70;
+  --accent-soft: #e8edfb;
+  --focus: #002fa7;
+  --max-width: 1120px;
+  --inset: 20px;
+  --section-gap: 28px;
+  --card-pad: 20px;
+  --radius: 2px;
+  --font: "Helvetica Neue", helvetica, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  --mono-nums: tabular-nums;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.6;
+  font-size: 16px;
+}
+.num, td, th, output, input { font-variant-numeric: var(--mono-nums); }
+
+/* Landmarks */
+.skip-link {
+  position: absolute; left: 12px; top: -48px; z-index: 50;
+  background: var(--ink); color: #fff; padding: 10px 14px; border-radius: var(--radius);
+  transition: top 0.15s ease;
+}
+.skip-link:focus { top: 12px; color: #fff; }
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.site-header-inner {
+  max-width: var(--max-width); margin: 0 auto; padding: 14px var(--inset);
+  display: flex; align-items: center; gap: 16px; justify-content: space-between;
+}
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.brand-folio { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); }
+h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+main { max-width: var(--max-width); margin: 0 auto; padding: 24px var(--inset) 64px; }
+.page-lead { border-left: 4px solid var(--accent); padding-left: 14px; margin: 0 0 24px; }
+.page-lead p { margin: 6px 0; }
+.muted { color: var(--muted); }
+
+/* Grid structure — min-width:0 keeps tables/fieldsets from forcing page overflow */
+.layout {
+  display: grid; gap: 24px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: start;
+}
+.layout > * { min-width: 0; }
+.stack { min-width: 0; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.stack > * + * { margin-top: var(--section-gap); }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--radius); padding: var(--card-pad);
+  min-width: 0; overflow-wrap: break-word;
+}
+fieldset { min-inline-size: 0; }
+.card-alt { background: var(--surface-alt); border-color: var(--line); }
+.card h2 { font-size: 18px; margin: 0 0 4px; }
+.card h3 { font-size: 15px; margin: 18px 0 8px; }
+.rule { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* Controls — one button family with variants */
+.btn {
+  appearance: none; border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink); padding: 10px 16px; font-size: 15px; min-height: 44px;
+  border-radius: var(--radius); cursor: pointer; font-family: inherit;
+}
+.btn:hover { background: var(--surface-alt); }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-pressed); }
+/* gi-pulse: single primary action only; static border under reduced motion */
+.btn-primary.is-pulse { animation: pulse-aura 2.2s ease-out infinite; }
+@keyframes pulse-aura {
+  0% { box-shadow: 0 0 0 0 rgba(0, 47, 167, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 47, 167, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 47, 167, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary.is-pulse { animation: none; outline: 2px solid var(--accent); outline-offset: 2px; }
+  * { scroll-behavior: auto !important; transition: none !important; }
+}
+.btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.field { display: grid; gap: 6px; margin: 10px 0; }
+.field label { font-weight: 700; font-size: 14px; }
+.field .hint { font-size: 13px; color: var(--muted); }
+.field input[type="number"], .field select, .field textarea {
+  font: inherit; padding: 10px 12px; border: 1px solid var(--line-strong);
+  border-radius: var(--radius); background: #fff; max-width: 100%;
+}
+.field textarea { min-height: 96px; }
+.field [aria-invalid="true"] { border-width: 2px; }
+.error-text { font-size: 13px; color: var(--ink); border-left: 4px solid var(--ink); padding-left: 8px; }
+.error-text::before { content: "오류: "; font-weight: 700; }
+fieldset { border: 1px solid var(--line); padding: 12px; margin: 12px 0; }
+legend { font-weight: 700; padding: 0 6px; }
+.radio-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.radio-row label { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--line); padding: 8px 12px; min-height: 44px; cursor: pointer; }
+.radio-row input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); max-width: 100%; }
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 14px; }
+caption { text-align: left; font-weight: 700; padding: 8px 10px; background: var(--surface-alt); }
+th, td { border-top: 1px solid var(--line); padding: 8px 10px; text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+thead th { background: var(--surface-alt); border-top: 0; }
+.badge { display: inline-block; border: 1px solid var(--line-strong); padding: 1px 8px; font-size: 12px; }
+.badge[data-kind="timelike"] { background: var(--ink); color: #fff; }
+.badge[data-kind="lightlike"] { background: var(--accent-soft); border-style: dashed; }
+.badge[data-kind="spacelike"] { background: #fff; }
+
+/* Diagram + scene */
+.figure { border: 1px solid var(--line); background: #fff; padding: 8px; }
+.figure svg { display: block; width: 100%; height: auto; }
+.figure figcaption { font-size: 13px; color: var(--muted); padding: 6px 2px 0; }
+.status-line { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 14px; }
+.stepper { display: flex; gap: 8px; list-style: none; padding: 0; margin: 12px 0; flex-wrap: wrap; }
+.stepper li { border: 1px solid var(--line); padding: 4px 10px; font-size: 13px; color: var(--muted); }
+.stepper li[aria-current="step"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+
+input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 44px; }
+dialog { border: 1px solid var(--line-strong); padding: 20px; max-width: min(560px, 92vw); }
+dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+.record-item { border-top: 1px solid var(--line); padding: 10px 0; font-size: 14px; }
+footer.site-footer { border-top: 1px solid var(--line); padding: 18px var(--inset) 40px; color: var(--muted); font-size: 13px; }
+footer.site-footer .inner { max-width: var(--max-width); margin: 0 auto; }
+
+@media (min-width: 901px) { :root { --inset: 32px; } }
