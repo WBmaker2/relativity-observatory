@@ -51,5 +51,6 @@
 
 ## 6. 배포 확인 (승인 후)
 
-- 미배포. 공개 URL 자산 경로와 하위 경로(`/.../`) 검증은 배포 승인 뒤 수행한다.
-- HVC 등록과 공개 갤러리 동기화는 별도 범위다.
+- 공개 URL: https://wbmaker2.github.io/relativity-observatory/ (200, Pages built 확인).
+- 하위 경로(`/relativity-observatory/`)에서 제목·비교 수치(β=0.60, S′ B 1.50초 먼저)·간격(Δs²=-4.00)·강조색 CSS·UPDATELOG 대화상자·예측 흐름을 직접 확인. 콘솔 오류 0건.
+- HVC 등록과 공개 갤러리 동기화는 별도 범위라 수행하지 않았다.

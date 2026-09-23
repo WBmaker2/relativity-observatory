@@ -28,6 +28,6 @@
 ## 문서
 
 - [x] README 사용법·구조·약속이 현재 코드와 일치
-- [x] VERIFICATION 1~5항 기록 완료, 미완 항목 명시 (교과 검토 미완)
+- [x] VERIFICATION 1~6항 기록 완료, 미완 항목 명시 (교과 검토 완료, 성취기준 매핑은 별도)
 - [x] UPDATELOG 오늘 날짜에 실제 변경만 쉬운 말로 기록
-- [ ] 배포 URL·HVC 주소는 배포 승인 뒤에만 기재 (지어내지 않기)
+- [x] 배포 URL 기재: https://wbmaker2.github.io/relativity-observatory/ (HVC·갤러리 동기화는 별도 범위라 제외)
