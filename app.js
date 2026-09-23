@@ -1,5 +1,5 @@
 import { forward, gamma, BETA_MIN, BETA_MAX } from "./engine/lorentz.js";
-import { intervalSquared, classify, KIND_LABEL } from "./engine/intervals.js";
+import { intervalSquared, classify, KIND_LABEL, describePair } from "./engine/intervals.js";
 import { receptionTime } from "./engine/receptions.js";
 import { defaultScenario, validateBeta, validateEvent, ENGINE_VERSION, SCENARIO_ID } from "./engine/scenarios.js";
 
@@ -24,11 +24,16 @@ const state = {
 const els = {
   form: $("setup-form"), beta: $("beta"), betaQuick: $("beta-quick"),
   aT: $("a-t"), aX: $("a-x"), bT: $("b-t"), bX: $("b-x"),
+  cSet: $("c-fieldset"), dSet: $("d-fieldset"),
+  cT: $("c-t"), cX: $("c-x"), dT: $("d-t"), dX: $("d-x"),
+  addC: $("add-c-btn"), removeC: $("remove-c-btn"), addD: $("add-d-btn"), removeD: $("remove-d-btn"),
   betaError: $("beta-error"), eventError: $("event-error"), setupStatus: $("setup-status"),
   frame: $("frame-select"), cursor: $("time-cursor"), cursorReadout: $("cursor-readout"),
   cursorFrame: $("cursor-frame-label"), play: $("play-btn"), stop: $("stop-btn"),
   eventBody: document.querySelector("#event-table tbody"),
   arrivalBody: document.querySelector("#arrival-table tbody"),
+  arrivalHead: $("arrival-head"),
+  pairBody: document.querySelector("#pair-table tbody"),
   intervalBadge: $("interval-badge"), intervalValue: $("interval-value"),
   plot: $("plot-svg"), plotCaption: $("plot-caption"), scene: $("scene-svg"),
   compare: $("compare-btn"), compareOut: $("compare-output"),
@@ -57,7 +62,11 @@ function readInputs() {
   const beta = toNum(els.beta);
   const a = { id: "A", tSeconds: toNum(els.aT), xLightSeconds: toNum(els.aX), sourceId: "platform-left" };
   const b = { id: "B", tSeconds: toNum(els.bT), xLightSeconds: toNum(els.bX), sourceId: "platform-right" };
-  return { beta, events: [a, b] };
+  const events = [a, b];
+  // C·D는 보일 때만 포함한다 (P0: 2~4개).
+  if (!els.cSet.hidden) events.push({ id: "C", tSeconds: toNum(els.cT), xLightSeconds: toNum(els.cX), sourceId: "extra-c" });
+  if (!els.dSet.hidden) events.push({ id: "D", tSeconds: toNum(els.dT), xLightSeconds: toNum(els.dX), sourceId: "extra-d" });
+  return { beta, events };
 }
 
 function applyInputs(beta, events, { fromQuick = false } = {}) {
@@ -121,10 +130,23 @@ function renderTables() {
     `<tr><th scope="row">${e.id}</th><td class="num">${fmt(e.tSeconds)}</td><td class="num">${fmt(e.xLightSeconds)}</td><td class="num">${fmt(e.tp)}</td><td class="num">${fmt(e.xp)}</td></tr>`
   ).join("");
   const arr = arrivals();
+  // 도착 표 머리: 사건 수에 맞게 열을 만든다.
+  els.arrivalHead.innerHTML = "<th scope=\"col\">수신자</th>" +
+    state.events.map((e) => `<th scope="col">${e.id}에서 온 빛 도착 t</th>`).join("") +
+    "<th scope=\"col\">가장 먼저 받는 쪽</th>";
   els.arrivalBody.innerHTML = arr.map(({ receiver, hits }) => {
-    const [ha, hb] = hits;
-    const first = ha && hb ? (Math.abs(ha.t - hb.t) < 1e-9 ? "동시" : ha.t < hb.t ? "A" : "B") : "—";
-    return `<tr><th scope="row">${receiver.label}</th><td class="num">${ha ? fmt(ha.t) + "초" : "도착 없음"}</td><td class="num">${hb ? fmt(hb.t) + "초" : "도착 없음"}</td><td>${first}</td></tr>`;
+    const timed = hits.map((h, i) => ({ h, id: state.events[i].id })).filter((o) => o.h);
+    let first = "—";
+    if (timed.length === hits.length && hits.length > 0) {
+      const best = Math.min(...hits.map((h) => h.t));
+      const winners = timed.filter((o) => Math.abs(o.h.t - best) < 1e-9).map((o) => o.id);
+      first = winners.length === hits.length ? "동시" : winners.join("·");
+    } else if (timed.length > 0) {
+      first = timed.map((o) => o.id).join("·") + "만 도착";
+    }
+    return `<tr><th scope="row">${receiver.label}</th>` +
+      hits.map((h) => `<td class="num">${h ? fmt(h.t) + "초" : "도착 없음"}</td>`).join("") +
+      `<td>${first}</td></tr>`;
   }).join("");
   const [A, B] = state.events;
   const ds2 = intervalSquared(B.tSeconds - A.tSeconds, B.xLightSeconds - A.xLightSeconds);
@@ -132,11 +154,20 @@ function renderTables() {
   els.intervalBadge.dataset.kind = kind;
   els.intervalBadge.textContent = KIND_LABEL[kind];
   els.intervalValue.textContent = `Δs² = ${fmt(ds2)} (Δt=${fmt(B.tSeconds - A.tSeconds)}, Δx=${fmt(B.xLightSeconds - A.xLightSeconds)})`;
-  // Compare sentence: event-time simultaneity in S'
-  const [TA, TB] = [rows[0].tp, rows[1].tp];
+  // 모든 쌍의 간격 (빛꼴 전이 과제용).
+  els.pairBody.innerHTML = state.events.flatMap((a, i) =>
+    state.events.slice(i + 1).map((b) => {
+      const d = describePair(a, b);
+      return `<tr><th scope="row">${a.id}–${b.id}</th><td class="num">${fmt(d.dt)}</td><td class="num">${fmt(d.dx)}</td><td class="num">${fmt(d.ds2)}</td><td><span class="badge" data-kind="${d.kind}">${d.label}</span></td></tr>`;
+    })
+  ).join("");
+  // 비교 문장: S′ 사건 시각 순서 일반형.
   const g = gamma(state.beta);
-  els.compareOut.textContent = `β=${fmt(state.beta)} (γ=${fmt(g)}) · S′(t′ A=${fmt(TA)}, B=${fmt(TB)}) — ` +
-    (Math.abs(TA - TB) < 1e-9 ? "S′에서도 동시" : TA < TB ? `S′에서는 A가 ${fmt(TB - TA)}초 먼저` : `S′에서는 B가 ${fmt(TA - TB)}초 먼저`);
+  const order = rows.map((e) => ({ id: e.id, t: e.tp })).sort((p, q) => p.t - q.t);
+  const sim = order.length > 1 && Math.abs(order[order.length - 1].t - order[0].t) < 1e-9;
+  els.compareOut.textContent = `β=${fmt(state.beta)} (γ=${fmt(g)}) · S′(` +
+    rows.map((e) => `${e.id}=${fmt(e.tp)}`).join(", ") + ") — " +
+    (sim ? "S′에서도 동시" : `S′에서는 ${order.map((o) => o.id).join("→")} 순 (먼저 ${order[0].id})`);
 }
 
 function svgEl(name, attrs = {}) {
@@ -275,10 +306,28 @@ els.form.addEventListener("submit", (ev) => {
   els.setupStatus.textContent = `예측 저장됨 (${state.prediction}) — 장면을 관찰하고 비교하세요`;
   renderAll();
 });
+function setExtra(which, show) {
+  const set = which === "C" ? els.cSet : els.dSet;
+  const add = which === "C" ? els.addC : els.addD;
+  const remove = which === "C" ? els.removeC : els.removeD;
+  set.hidden = !show;
+  add.hidden = show;
+  remove.hidden = !show;
+}
+els.addC.addEventListener("click", () => { setExtra("C", true); syncFromInputs(); els.cT.focus(); });
+els.removeC.addEventListener("click", () => { setExtra("C", false); syncFromInputs(); });
+els.addD.addEventListener("click", () => { setExtra("D", true); syncFromInputs(); els.dT.focus(); });
+els.removeD.addEventListener("click", () => { setExtra("D", false); syncFromInputs(); });
+function syncFromInputs() {
+  const { beta, events } = readInputs();
+  if (applyInputs(beta, events)) renderAll();
+}
 $("reset-btn").addEventListener("click", () => {
   const d = defaultScenario();
   els.beta.value = String(d.beta); els.betaQuick.value = String(d.beta);
   els.aT.value = "0"; els.aX.value = "-1"; els.bT.value = "0"; els.bX.value = "1";
+  els.cT.value = "1"; els.cX.value = "0"; els.dT.value = "-1"; els.dX.value = "0";
+  setExtra("C", false); setExtra("D", false);
   applyInputs(d.beta, structuredClone(d.events)); renderAll();
 });
 els.betaQuick.addEventListener("input", () => {

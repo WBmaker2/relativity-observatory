@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { gamma } from "../engine/lorentz.js";
-import { classify } from "../engine/intervals.js";
+import { forward, inverse, gamma } from "../engine/lorentz.js";
+import { intervalSquared, classify, describePair } from "../engine/intervals.js";
 import { receptionTime } from "../engine/receptions.js";
 import { validateBeta, validateEvent } from "../engine/scenarios.js";
 
@@ -46,4 +46,22 @@ test("간격 경계 분류가 뒤집히지 않음", () => {
   assert.equal(classify(1e-8), "timelike");
   assert.equal(classify(-1e-8), "spacelike");
   assert.equal(classify(0), "lightlike");
+});
+
+test("탐구용 기본값 C(1,0)·D(-1,0): A-C·B-D 빛꼴, A-B 공간꼴", () => {
+  const A = { id: "A", tSeconds: 0, xLightSeconds: -1 };
+  const B = { id: "B", tSeconds: 0, xLightSeconds: 1 };
+  const C = { id: "C", tSeconds: 1, xLightSeconds: 0 };
+  const D = { id: "D", tSeconds: -1, xLightSeconds: 0 };
+  assert.equal(describePair(A, C).kind, "lightlike");
+  assert.equal(describePair(B, D).kind, "lightlike");
+  assert.equal(describePair(A, B).kind, "spacelike");
+  // 4사건 전 쌍의 Δs²가 변환 전후 보존
+  for (const [P, Q] of [[A, B], [A, C], [A, D], [B, C], [B, D], [C, D]]) {
+    const ds2 = intervalSquared(Q.tSeconds - P.tSeconds, Q.xLightSeconds - P.xLightSeconds);
+    const Pp = forward(P.tSeconds, P.xLightSeconds, 0.6);
+    const Qp = forward(Q.tSeconds, Q.xLightSeconds, 0.6);
+    const ds2p = intervalSquared(Qp.t - Pp.t, Qp.x - Pp.x);
+    assert.ok(Math.abs(ds2 - ds2p) < 1e-9, `${P.id}-${Q.id}: ${ds2} vs ${ds2p}`);
+  }
 });
