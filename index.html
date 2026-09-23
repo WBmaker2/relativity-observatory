@@ -117,7 +117,7 @@
           <p class="muted">3D 장면이 아니라 도식적 배치입니다. 물체의 시각적 길이를 시간 지연의 근거로 쓰지 마세요. <span id="cursor-frame-label">현재 시간 커서는 S계 시각</span>입니다.</p>
           <figure class="figure">
             <svg id="scene-svg" viewBox="0 0 640 180" role="img" aria-label="플랫폼과 이동 관찰자의 1차원 도식 장면"></svg>
-            <figcaption>가로축 x(광초). 검은 사각형: 플랫폼 구간, 파란 사각형: 이동 관찰자 위치, 점선: 빛 신호.</figcaption>
+            <figcaption>가로선: 플랫폼. 속 빈 검은 사각형: 플랫폼 중앙 관찰자, 검은 사각형: 사건 위치, 파란 사각형: 이동 관찰자, 점선 원: 빛 신호.</figcaption>
           </figure>
           <div class="field">
             <label for="time-cursor">시간 커서 (초)</label>
@@ -150,7 +150,7 @@
             </table>
           </div>
           <h3>간격 분류</h3>
-          <p id="interval-line">두 사건의 간격: <span class="badge" id="interval-badge" data-kind="spacelike">공간꼴</span> <span class="num" id="interval-value"></span></p>
+          <p id="interval-line">기준 쌍 A–B의 간격: <span class="badge" id="interval-badge" data-kind="spacelike">공간꼴</span> <span class="num" id="interval-value"></span></p>
           <div class="table-wrap">
             <table id="pair-table">
               <caption>모든 사건 쌍의 간격 (C·D 추가 시 함께 판정)</caption>
@@ -174,7 +174,7 @@
       <div class="stack">
         <section class="card card-alt" aria-labelledby="h-compare">
           <h2 id="h-compare">비교</h2>
-          <p class="muted">β를 바꾸면 새 실험으로 기록됩니다. 일반상대론·가속 관찰자는 P0에서 다루지 않습니다.</p>
+          <p class="muted">β를 바꾸면 표·도표가 바로 갱신된다. 남기고 싶으면 아래 기록에 저장한다. 일반상대론·가속 관찰자는 P0에서 다루지 않습니다.</p>
           <div class="field">
             <label for="beta-quick">β 빠른 변경 (−0.9 ~ 0.9)</label>
             <input id="beta-quick" type="range" min="-0.9" max="0.9" step="0.05" value="0.6" />
@@ -188,7 +188,7 @@
 
         <section class="card" aria-labelledby="h-p1">
           <h2 id="h-p1">길이·고유시간·여정 (P1)</h2>
-          <p class="muted">위에서 정한 β 값을 함께 쓴다. 길이 측정은 같은 시각에 잰 두 끝만 인정한다.</p>
+          <p class="muted">위에서 정한 β 값을 함께 쓴다. 막대는 S′에 정지, 길이는 S에서 같은 시각에 잰 두 끝으로만 잰다.</p>
           <div class="field">
             <label for="p1-l0">막대 정지 길이 L₀ (광초, 0 초과 ~ 10)</label>
             <input id="p1-l0" type="number" step="0.1" min="0.1" max="10" value="2" aria-describedby="p1-l0-error" />

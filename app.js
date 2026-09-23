@@ -292,7 +292,7 @@ function renderP1() {
     els.p1L0Error.hidden = true;
     try {
       const { L } = measureSimultaneousLength(L0, state.beta);
-      els.p1LOut.textContent = `β=${fmt(state.beta)}에서 L₀=${fmt(L0)} → L′=${fmt(L)}광초 (S′ 동시 측정)`;
+      els.p1LOut.textContent = `β=${fmt(state.beta)}에서 L₀=${fmt(L0)} → L′=${fmt(L)}광초 (S에서 동시 측정)`;
     } catch (e) { els.p1LOut.textContent = e.message; }
   }
   const dt = num(els.p1Dt);
