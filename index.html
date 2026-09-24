@@ -27,7 +27,7 @@
   <main id="main" tabindex="-1">
     <div class="page-lead">
       <p><strong>두 사건이 동시에 일어났다는 말은 모든 관찰자에게 같을까?</strong></p>
-      <p class="muted">플랫폼 양끝의 섬광을 이동 관찰자가 어떤 순서로 받는지 예측하고, 사건 시간과 빛 도착 시간을 분리해 확인합니다. 대상: 고등학교 물리·수학, 30분 활동.</p>
+      <p class="muted">A와 B의 빛은 어느 순서로 도착할까요? 먼저 예측을 고르고, 장면과 표에서 빛이 도착한 때와 사건이 일어난 때를 비교해 보세요. 고등학교 물리·수학 활동 · 약 30분</p>
       <p><button class="btn btn-primary" id="start-btn" type="button">시작하기</button></p>
       <figure class="intro-strip" aria-label="교육용 가상 도입 삽화">
         <picture><source srcset="./assets/intro-train.webp" type="image/webp" /><img src="./assets/intro-train.png" alt="교육용 가상 열차 도입 삽화 (수치 없음)" loading="lazy" /></picture>
@@ -49,7 +49,7 @@
       <div class="stack">
         <section class="card" aria-labelledby="h-setup">
           <h2 id="h-setup">사건 설정</h2>
-          <p class="muted">S계(플랫폼계) 기준입니다. S′는 S에 대해 +x 방향으로 속도 v로 움직이며, 원점은 t=t′=0에 일치합니다. 단위: 광초, 초 (c=1).</p>
+          <p class="muted">플랫폼에 서서 잰 값을 S계, 움직이는 열차에서 잰 값을 S′계라고 해요. 거리는 광초(빛이 1초 동안 가는 거리), 시간은 초로 적어요.</p>
           <form id="setup-form" novalidate>
             <div class="grid-2">
               <div class="field">
@@ -125,40 +125,45 @@
             <span class="hint" id="cursor-readout">t = 0.00초 · 키보드 ←/→ 로 0.05초씩 이동</span>
           </div>
           <p class="status-line">
-            <button class="btn" id="play-btn" type="button">재생</button>
+            <button class="btn btn-primary" id="play-btn" type="button">재생</button>
             <button class="btn" id="stop-btn" type="button">정지</button>
           </p>
           <p class="muted" id="play-policy">탭을 숨기면 재생이 멈추고, 돌아오면 멈춘 자리에서 직접 다시 시작한다.</p>
         </section>
 
+        <div id="analysis-results" class="stack" hidden>
         <section class="card" aria-labelledby="h-coords">
           <h2 id="h-coords">좌표 — S와 S′의 사건 표</h2>
           <p class="muted">같은 사건을 두 기준계 좌표로 표현합니다. 음의 t′는 기준 원점 이전 사건이며 오류가 아닙니다.</p>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="사건 좌표 표, 가로로 스크롤 가능" aria-describedby="coords-table-hint">
             <table id="event-table">
               <caption>사건 좌표 (S / S′)</caption>
               <thead><tr><th scope="col">사건</th><th scope="col">t (초, S)</th><th scope="col">x (광초, S)</th><th scope="col">t′ (초, S′)</th><th scope="col">x′ (광초, S′)</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
+          <p class="table-scroll-hint muted" id="coords-table-hint">표를 옆으로 밀거나 좌우 화살표 키를 눌러 오른쪽 열도 볼 수 있어요.</p>
           <h3>빛 도착 시간과 사건 시간은 다른 표에 둡니다</h3>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="빛 도착 시간 표, 가로로 스크롤 가능" aria-describedby="arrival-table-hint">
             <table id="arrival-table">
               <caption>빛 도착 시간 (수신자별)</caption>
               <thead><tr id="arrival-head"><th scope="col">수신자</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
+          <p class="table-scroll-hint muted" id="arrival-table-hint">표를 옆으로 밀거나 좌우 화살표 키를 눌러 오른쪽 열도 볼 수 있어요.</p>
           <h3>간격 분류</h3>
           <p id="interval-line">기준 쌍 A–B의 간격: <span class="badge" id="interval-badge" data-kind="spacelike">공간꼴</span> <span class="num" id="interval-value"></span></p>
-          <div class="table-wrap">
+          <div class="table-wrap" tabindex="0" role="region" aria-label="사건 간격 표, 가로로 스크롤 가능" aria-describedby="pair-table-hint">
             <table id="pair-table">
               <caption>모든 사건 쌍의 간격 (C·D 추가 시 함께 판정)</caption>
               <thead><tr><th scope="col">쌍</th><th scope="col">Δt (초)</th><th scope="col">Δx (광초)</th><th scope="col">Δs²</th><th scope="col">분류</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
-          <p class="muted">공간꼴 순서 변화는 인과 역전이 아닙니다. 경고 색으로 오류처럼 표시하지 않습니다. 시간 지연 Δt=γΔτ는 같은 시계의 두 사건에만 쓰고, 서로 다른 장소의 임의 사건에 바로 적용하지 않습니다. (예: β=0.6에서 이동 시계 1초는 S에서 1.25초로 잰다.)</p>
+          <p class="table-scroll-hint muted" id="pair-table-hint">표를 옆으로 밀거나 좌우 화살표 키를 눌러 오른쪽 열도 볼 수 있어요.</p>
+          <p class="muted">공간꼴인 두 사건은 서로 원인과 결과로 이어지지 않아요. 그래서 움직이는 기준계에서는 두 사건의 순서가 달라질 수 있어요.</p>
+          <details class="advanced-note"><summary>고등학교 심화: 시간 지연 공식의 조건</summary><p class="muted">빛의 속도를 c=1로 두어 거리 단위를 광초로 표현해요. 시간 지연 Δt=γΔτ는 같은 시계로 잰 두 사건에만 써요. 서로 다른 장소의 임의 사건에 바로 적용하지 않습니다. 예를 들어 β=0.6에서 이동 시계 1초는 S에서 1.25초로 잽니다.</p></details>
         </section>
 
         <section class="card" aria-labelledby="h-plot">
@@ -169,25 +174,28 @@
             <figcaption id="plot-caption">세로축 ct(광초), 가로축 x(광초). 표의 수치와 함께 읽으세요.</figcaption>
           </figure>
         </section>
+        </div>
       </div>
 
       <div class="stack">
         <section class="card card-alt" aria-labelledby="h-compare">
           <h2 id="h-compare">비교</h2>
-          <p class="muted">β를 바꾸면 표·도표가 바로 갱신된다. 남기고 싶으면 아래 기록에 저장한다. 일반상대론·가속 관찰자는 P0에서 다루지 않습니다.</p>
+          <p class="muted">예측을 저장하고 장면을 관찰한 뒤 기준계를 비교해 보세요. 일반상대론·가속 관찰자는 이 활동에서 다루지 않습니다.</p>
           <div class="field">
             <label for="beta-quick">β 빠른 변경 (−0.9 ~ 0.9)</label>
             <input id="beta-quick" type="range" min="-0.9" max="0.9" step="0.05" value="0.6" />
           </div>
-          <p><button class="btn btn-primary is-pulse" id="compare-btn" type="button">기준계 비교 확인</button></p>
-          <p class="status-line">결과: <output id="compare-output">S에서는 동시, S′에서는 B가 1.50초 먼저 (예제 β=0.6)</output></p>
+          <p><button class="btn btn-primary" id="compare-btn" type="button" disabled>기준계 비교 확인</button></p>
+          <p class="status-line" id="compare-result" hidden>결과: <output id="compare-output"></output></p>
+          <p class="muted" id="compare-next" role="status">예측을 저장한 뒤 장면을 관찰하면 비교할 수 있어요.</p>
           <hr class="rule" />
           <h3>전이 과제</h3>
-          <p>빛으로 연결된 두 사건(빛꼴)의 순서는 β를 바꿔도 바뀌지 않는지 검사해 보세요.</p>
+          <p>비교를 마친 뒤, 빛으로 연결된 두 사건(빛꼴)의 순서가 기준계를 바꿔도 유지되는지 살펴보세요.</p>
         </section>
 
-        <section class="card" aria-labelledby="h-p1">
-          <h2 id="h-p1">길이·고유시간·여정 (P1)</h2>
+        <section class="card" aria-labelledby="h-p1" id="advanced-section" hidden>
+          <details id="advanced-details">
+          <summary id="h-p1">고등학교 심화: 길이·고유시간·여정</summary>
           <p class="muted">위에서 정한 β 값을 함께 쓴다. 막대는 S′에 정지, 길이는 S에서 같은 시각에 잰 두 끝으로만 잰다.</p>
           <div class="field">
             <label for="p1-l0">막대 정지 길이 L₀ (광초, 0 초과 ~ 10)</label>
@@ -214,19 +222,24 @@
           </div>
           <p class="status-line">결과: <output id="p1-j-out">좌표시 합 2.50초 · 고유시간 합 2.00초</output></p>
           <p class="muted">누가 젊어지는가의 해석은 별도 설계 전까지 다루지 않는다.</p>
+          </details>
         </section>
 
-        <section class="card" aria-labelledby="h-record">
+        <section class="card" aria-labelledby="h-record" id="record-section" hidden>
           <h2 id="h-record">기록</h2>
           <div class="field">
-            <label for="explanation">‘보는 순서’와 ‘그 계에서의 사건 시간’을 구분해 설명하세요</label>
-            <textarea id="explanation" placeholder="예: S에서 동시인 A·B도 S′에서는 …"></textarea>
+            <label for="explanation">빛은 어느 쪽에 먼저 도착했나요? S에서 사건 순서는 어땠나요? S′에서는 어땠나요?</label>
+            <textarea id="explanation" placeholder="빛 도착: ___가 먼저 / S의 사건 시간: ___ / S′의 사건 시간: ___"></textarea>
           </div>
           <p>
             <button class="btn btn-primary" id="save-btn" type="button">기록 저장</button>
             <button class="btn" id="export-btn" type="button">JSON 내보내기</button>
           </p>
           <p class="status-line" role="status" id="save-status">저장된 기록 없음 (이 브라우저에만 저장, 개인 식별 정보 없음)</p>
+          <div id="saved-takeaway" hidden>
+            <p><strong>기억할 점:</strong> 빛이 도착한 순서와 각 기준계에서 잰 사건 시간은 서로 다른 값이에요.</p>
+            <button class="btn btn-primary" id="restart-btn" type="button">다른 β로 다시 예측하기</button>
+          </div>
           <div id="record-list"></div>
         </section>
       </div>

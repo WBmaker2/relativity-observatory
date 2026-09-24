@@ -5,6 +5,7 @@ import { measureSimultaneousLength, validateL0 } from "./engine/length.js";
 import { properTime } from "./engine/propertime.js";
 import { journeySummary } from "./engine/segments.js";
 import { defaultScenario, validateBeta, validateEvent, ENGINE_VERSION, SCENARIO_ID } from "./engine/scenarios.js";
+import { predictionLabel, updatePhaseUI } from "./activity-flow.js";
 
 // WCAG: semantic structure lives in index.html; here we keep DOM updates + engine wiring.
 // Reduced motion: pulse becomes static border via CSS; play steps discretely.
@@ -16,6 +17,7 @@ const state = {
   beta: scenario.beta,
   events: structuredClone(scenario.events),
   prediction: null,
+  observed: false,
   phase: "setup", // setup -> predicted -> playing -> comparing -> report
   frame: "S",
   cursorT: 0,
@@ -40,6 +42,8 @@ const els = {
   intervalBadge: $("interval-badge"), intervalValue: $("interval-value"),
   plot: $("plot-svg"), plotCaption: $("plot-caption"), scene: $("scene-svg"),
   compare: $("compare-btn"), compareOut: $("compare-output"),
+  analysis: $("analysis-results"), compareResult: $("compare-result"), compareNext: $("compare-next"),
+  recordSection: $("record-section"), savedTakeaway: $("saved-takeaway"), advancedSection: $("advanced-section"),
   explanation: $("explanation"), save: $("save-btn"), exportBtn: $("export-btn"),
   saveStatus: $("save-status"), recordList: $("record-list"),
   stepper: $("stepper"), start: $("start-btn"),
@@ -51,16 +55,7 @@ const els = {
 };
 
 function setPhase(p) {
-  state.phase = p;
-  els.stepper.querySelectorAll("li").forEach((li) => {
-    if (li.dataset.step === p) li.setAttribute("aria-current", "step");
-    else li.removeAttribute("aria-current");
-  });
-  // gi-pulse: exactly one primary action carries .is-pulse
-  for (const b of [$("predict-btn"), els.compare, els.save]) b.classList.remove("is-pulse");
-  if (p === "setup") $("predict-btn").classList.add("is-pulse");
-  if (p === "predicted" || p === "playing") els.compare.classList.add("is-pulse");
-  if (p === "comparing") els.save.classList.add("is-pulse");
+  updatePhaseUI(p, state, els, $, firstArrivalOrder());
 }
 
 function readInputs() {
@@ -79,7 +74,7 @@ function readInputs() {
 function applyInputs(beta, events, { fromQuick = false } = {}) {
   const vb = validateBeta(beta);
   if (!vb.ok) {
-    els.betaError.textContent = vb.reason + " 이전 유효값 " + state.lastValidBeta + " 유지.";
+    els.betaError.textContent = `입력한 β ${els.beta.value || "(빈칸)"}는 적용하지 않았어요. ${vb.reason} 계산에는 이전 유효값 β=${state.lastValidBeta}를 사용해요.`;
     els.betaError.hidden = false;
     els.beta.setAttribute("aria-invalid", "true");
     return false;
@@ -123,6 +118,15 @@ function arrivals() {
     const hits = state.events.map((e) => receptionTime({ t: e.tSeconds, x: e.xLightSeconds }, r));
     return { receiver: r, hits };
   });
+}
+
+function firstArrivalOrder() {
+  const train = arrivals().find((entry) => entry.receiver.id === "train-mid");
+  const hits = train.hits.map((hit, i) => hit && ({ id: state.events[i].id, time: hit.t })).filter(Boolean);
+  if (!hits.length) return "빛을 받지 못했어요";
+  const earliest = Math.min(...hits.map((hit) => hit.time));
+  const first = hits.filter((hit) => Math.abs(hit.time - earliest) < 1e-9).map((hit) => hit.id);
+  return first.length === hits.length ? "두 빛을 동시에" : `${first.join("·")}의 빛을 먼저`;
 }
 
 function fmt(n, d = 2) {
@@ -326,7 +330,7 @@ function renderRecords() {
     const beta = Number.isFinite(r?.parameters?.beta) ? r.parameters.beta : "—";
     const pred = typeof r?.prediction === "string" && r.prediction ? r.prediction : "—";
     const expl = typeof r?.explanation === "string" ? r.explanation.slice(0, 80) : "";
-    return `<div class="record-item"><strong>${escapeHtml(date)}</strong> · β=${escapeHtml(String(beta))} · 예측 ${escapeHtml(pred)} · ${escapeHtml(expl)}</div>`;
+    return `<div class="record-item"><strong>${escapeHtml(date)}</strong> · β=${escapeHtml(String(beta))} · 예측 ${escapeHtml(predictionLabel(pred))} · ${escapeHtml(expl)}</div>`;
   }).join("");
 }
 function escapeHtml(s) {
@@ -336,13 +340,17 @@ function escapeHtml(s) {
 // Events
 els.form.addEventListener("submit", (ev) => {
   ev.preventDefault();
-  const { beta, events } = readInputs();
-  if (!applyInputs(beta, events)) { els.setupStatus.textContent = "입력 오류 — 이유를 확인하고 이전 유효값 유지"; return; }
   const pred = new FormData(els.form).get("prediction");
-  if (!pred) { els.setupStatus.textContent = "예측을 하나 선택하세요 (A가 먼저 / B가 먼저 / 동시)"; return; }
+  if (!["A-first", "B-first", "simultaneous"].includes(pred)) {
+    els.setupStatus.textContent = "예측을 하나 선택하세요 (A가 먼저 / B가 먼저 / 동시)"; return;
+  }
+  const { beta, events } = readInputs();
+  if (!applyInputs(beta, events)) { els.setupStatus.textContent = "입력 오류 — 입력값과 계산에 쓰는 값을 확인하세요."; return; }
+  if (timer) { clearInterval(timer); timer = null; }
   state.prediction = String(pred);
+  state.observed = false;
+  state.cursorT = 0; els.cursor.value = "0";
   setPhase("predicted");
-  els.setupStatus.textContent = `예측 저장됨 (${state.prediction}) — 장면을 관찰하고 비교하세요`;
   renderAll();
 });
 function setExtra(which, show) {
@@ -353,6 +361,18 @@ function setExtra(which, show) {
   add.hidden = show;
   remove.hidden = !show;
 }
+document.querySelectorAll(".table-wrap[tabindex='0']").forEach((wrap) => {
+  wrap.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    const maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    if (maxScroll <= 0) return;
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const next = Math.max(0, Math.min(maxScroll, wrap.scrollLeft + direction * Math.max(24, wrap.clientWidth * 0.6)));
+    if (next === wrap.scrollLeft) return;
+    event.preventDefault();
+    wrap.scrollLeft = next;
+  });
+});
 els.addC.addEventListener("click", () => { setExtra("C", true); syncFromInputs(); els.cT.focus(); });
 els.removeC.addEventListener("click", () => { setExtra("C", false); syncFromInputs(); });
 els.addD.addEventListener("click", () => { setExtra("D", true); syncFromInputs(); els.dT.focus(); });
@@ -361,31 +381,62 @@ function syncFromInputs() {
   const { beta, events } = readInputs();
   if (applyInputs(beta, events)) renderAll();
 }
-$("reset-btn").addEventListener("click", () => {
+function resetActivity(focusSetup = false) {
+  if (timer) { clearInterval(timer); timer = null; }
   const d = defaultScenario();
   els.beta.value = String(d.beta); els.betaQuick.value = String(d.beta);
   els.aT.value = "0"; els.aX.value = "-1"; els.bT.value = "0"; els.bX.value = "1";
   els.cT.value = "1"; els.cX.value = "0"; els.dT.value = "-1"; els.dX.value = "0";
   setExtra("C", false); setExtra("D", false);
-  applyInputs(d.beta, structuredClone(d.events)); renderAll();
-});
+  els.frame.value = "S"; state.frame = "S";
+  els.cursor.value = "0"; state.cursorT = 0;
+  state.prediction = null; state.observed = false;
+  $("advanced-details").open = false;
+  els.explanation.value = ""; els.setupStatus.textContent = "입력 대기 중";
+  els.betaError.hidden = true; els.eventError.hidden = true;
+  for (const radio of els.form.querySelectorAll('[name="prediction"]')) radio.checked = false;
+  els.p1L0.value = "2"; els.p1Dt.value = "1.25"; els.p1S1b.value = "0.6"; els.p1S1t.value = "1.25";
+  els.p1S2b.value = "-0.6"; els.p1S2t.value = "1.25";
+  applyInputs(d.beta, structuredClone(d.events));
+  setPhase("setup"); renderAll();
+  if (focusSetup) {
+    $("predict-btn").scrollIntoView({ behavior: "smooth", block: "center" });
+    $("predict-btn").focus({ preventScroll: true });
+  }
+}
+$("reset-btn").addEventListener("click", resetActivity);
+$("restart-btn").addEventListener("click", () => resetActivity(true));
 els.betaQuick.addEventListener("input", () => {
   const { events } = readInputs();
-  if (applyInputs(Number(els.betaQuick.value), events, { fromQuick: true })) renderAll();
+  if (applyInputs(Number(els.betaQuick.value), events, { fromQuick: true })) {
+    if (state.prediction) {
+      if (timer) { clearInterval(timer); timer = null; }
+      state.prediction = null; state.observed = false;
+      for (const radio of els.form.querySelectorAll('[name="prediction"]')) radio.checked = false;
+      els.frame.value = "S"; state.frame = "S";
+      state.cursorT = 0; els.cursor.value = "0";
+      setPhase("setup");
+      els.setupStatus.textContent = "β를 바꿨어요. 변경한 조건으로 예측을 다시 저장하세요.";
+    }
+    renderAll();
+  }
 });
 els.frame.addEventListener("change", () => { state.frame = els.frame.value === "Sp" ? "S′" : "S"; renderAll(); });
 els.cursor.addEventListener("input", () => {
   state.cursorT = Number(els.cursor.value);
-  if (state.phase === "predicted") setPhase("playing");
+  if (state.prediction && !state.observed) {
+    state.observed = true;
+    setPhase("playing");
+  }
   renderAll();
 });
 let timer = null;
 els.play.addEventListener("click", () => {
   if (timer) return;
-  setPhase("playing");
   timer = setInterval(() => {
     state.cursorT = Number((state.cursorT + 0.2).toFixed(2));
     if (state.cursorT > 4) { clearInterval(timer); timer = null; return; }
+    if (state.prediction && !state.observed) { state.observed = true; setPhase("playing"); }
     els.cursor.value = String(state.cursorT);
     renderAll();
   }, 300);
@@ -396,11 +447,12 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden && timer) { clearInterval(timer); timer = null; }
 });
 els.compare.addEventListener("click", () => {
-  const { beta, events } = readInputs();
-  if (!applyInputs(beta, events)) return;
+  if (!state.prediction || !state.observed || state.phase === "report") return;
+  if (timer) { clearInterval(timer); timer = null; }
   renderAll(); setPhase("comparing");
 });
 els.save.addEventListener("click", () => {
+  if (!state.prediction || !state.observed || state.phase !== "comparing") return;
   const recs = loadRecords();
   const [A, B] = state.events;
   const rec = {
@@ -425,6 +477,7 @@ els.start.addEventListener("click", () => { $("h-setup").scrollIntoView({ behavi
 // Update log dialog (WCAG: native dialog, Esc closes, focus returns automatically)
 const LOG_ENTRIES = [
   { date: "2026-09-23", text: "P0 첫 화면 공개: 사건 설정·장면·좌표·도표·기록 흐름, β=0.6 예제와 불변량 검증 포함." },
+  { date: "2026-09-24", text: "중·고등학생 학습 흐름 개선: 예측·관찰 후 비교하도록 단계 잠금, 완전 재설정, 모바일 표 안내, 학생용 상태·오류 문구, 접힌 고등학교 심화, 저장 뒤 다음 활동을 추가." },
 ];
 async function openLog() {
   // WCAG: open dialog synchronously so focus moves immediately; fill content after.
